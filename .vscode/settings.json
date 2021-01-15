@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "string": "cpp",
+        "initializer_list": "cpp",
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "utility": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
+}

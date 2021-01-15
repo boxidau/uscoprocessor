@@ -1,0 +1,37 @@
+{
+  "version": "1",
+  "target": "vsCode",
+  "buildSystem": "makefile",
+  "debugSupport": "none",
+  "configurations": [
+    {
+      "name": "default",
+      "guid": "c578b223-9fe7-4aeb-a11e-d7ec33d98dbc",
+      "setupType": "quick",
+      "coreBase": "C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr",
+      "compilerBase": "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\arm",
+      "makefileExtension": null,
+      "copyCore": false,
+      "sharedLibraries": [
+        "DebugLog",
+        "DebugLog"
+      ],
+      "projectLibraries": [
+        "SPI",
+        "SD",
+        "FlexCAN",
+        "Metro",
+        "Time"
+      ],
+      "board": {
+        "name": "Teensy 3.5",
+        "options": {
+          "USB Type": "Serial",
+          "CPU Speed": "120 MHz",
+          "Optimize": "Faster",
+          "Keyboard Layout": "US English"
+        }
+      }
+    }
+  ]
+}
