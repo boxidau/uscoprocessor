@@ -2,23 +2,28 @@
 
 #include <DebugLog.h>
 
-time_t initialTime = 0;
+static time_t initialTime = 0;
 
-time_t getTeensy3Time() {
+static time_t getTeensy3Time()
+{
     return Teensy3Clock.get();
 }
 
-void ClockTimeClass::setup() {
-    setSyncProvider(getTeensy3Time);      
-    if (timeStatus() != timeSet) {
+void ClockTime::setup()
+{
+    setSyncProvider(getTeensy3Time);
+    if (timeStatus() != timeSet)
+    {
         LOG_ERROR("Unable to sync with the RTC");
-    } else {
+    }
+    else
+    {
         LOG_VERBOSE("RTC has set the system time");
     }
     initialTime = now();
 }
 
-double ClockTimeClass::getMillisTime() {
+double ClockTime::getMillisTime()
+{
     return (double)initialTime + ((double)millis() / 1000);
 }
-

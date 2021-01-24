@@ -3,16 +3,16 @@
 #include <Metro.h>
 #include <DebugLog.h>
 
-
-
-void AnalogSensors::setup() {
+void AnalogSensors::setup()
+{
     pinMode(EXTERNAL_ADC1, INPUT);
     pinMode(EXTERNAL_ADC2, INPUT);
     pinMode(EXTERNAL_NTC1, INPUT);
     pinMode(EXTERNAL_NTC2, INPUT);
 }
 
-void AnalogSensors::getCANMessage(CAN_message_t &msg) {
+void AnalogSensors::getCANMessage(CAN_message_t &msg)
+{
 
     analogReadRes(12);
     uint16_t adc1_val = analogRead(EXTERNAL_ADC1);

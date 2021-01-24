@@ -15,7 +15,7 @@ volatile unsigned long tachPeriod = 0x8FFF;
 unsigned long previousTach = 0;
 uint8_t timeConstant = KNOCK_MAX_INTEG_TIME;
 
-bool KnockDetectorClass::error = false;
+bool KnockDetector::error = false;
 
 uint16_t previousEngineSpeed = 0;
 int engineSpeed = 0;
@@ -26,100 +26,106 @@ SPISettings SPISettingsKnock(3000000, MSBFIRST, SPI_MODE1);
 
 void TachInterrupt()
 {
-  // measurement window ends
-  digitalWriteFast(KNOCK_HOLD_PIN, LOW);
-  // Calculate period between tach interrupts
-  tachPeriod = micros() - previousTach;
-  previousTach = micros();
+    // measurement window ends
+    digitalWriteFast(KNOCK_HOLD_PIN, LOW);
+    // Calculate period between tach interrupts
+    tachPeriod = micros() - previousTach;
+    previousTach = micros();
 
-  knockValue = analogRead(KNOCK_ADC_INPUT_PIN);
-  digitalWriteFast(KNOCK_HOLD_PIN, HIGH);
-  digitalWriteFast(TACH_LED, !digitalReadFast(TACH_LED));
+    knockValue = analogRead(KNOCK_ADC_INPUT_PIN);
+    digitalWriteFast(KNOCK_HOLD_PIN, HIGH);
+    digitalWriteFast(TACH_LED, !digitalReadFast(TACH_LED));
 }
 
-void KnockDetectorClass::setup()
+void KnockDetector::setup()
 {
-  pinMode(SPI_KNOCK_CS_PIN, OUTPUT);
-  digitalWrite(SPI_KNOCK_CS_PIN, HIGH);
+    pinMode(SPI_KNOCK_CS_PIN, OUTPUT);
+    digitalWrite(SPI_KNOCK_CS_PIN, HIGH);
 
-  pinMode(KNOCK_TEST_PIN, OUTPUT);
-  digitalWrite(KNOCK_TEST_PIN, HIGH);
+    pinMode(KNOCK_TEST_PIN, OUTPUT);
+    digitalWrite(KNOCK_TEST_PIN, HIGH);
 
-  pinMode(KNOCK_HOLD_PIN, OUTPUT);
-  digitalWrite(KNOCK_HOLD_PIN, LOW);
+    pinMode(KNOCK_HOLD_PIN, OUTPUT);
+    digitalWrite(KNOCK_HOLD_PIN, LOW);
 
-  pinMode(TACH_INPUT_PIN, INPUT);
+    pinMode(TACH_INPUT_PIN, INPUT);
 
-  LOG_VERBOSE("Set prescaler");
-  SPIWrite(KNOCK_SET_PRESCALER);
+    LOG_VERBOSE("Set prescaler");
+    SPIWrite(KNOCK_SET_PRESCALER);
 
-  LOG_VERBOSE("Set set channel 1");
-  SPIWrite(KNOCK_SET_CHANNEL_1);
+    LOG_VERBOSE("Set set channel 1");
+    SPIWrite(KNOCK_SET_CHANNEL_1);
 
-  LOG_VERBOSE("Set band pass");
-  SPIWrite(KNOCK_SET_BAND_PASS_FREQ);
+    LOG_VERBOSE("Set band pass");
+    SPIWrite(KNOCK_SET_BAND_PASS_FREQ);
 
-  LOG_VERBOSE("Set set gain");
-  SPIWrite(KNOCK_SET_GAIN);
+    LOG_VERBOSE("Set set gain");
+    SPIWrite(KNOCK_SET_GAIN);
 
-  LOG_VERBOSE("Set integration time");
-  SPIWrite(KNOCK_MIN_INTEG_TIME);
+    LOG_VERBOSE("Set integration time");
+    SPIWrite(KNOCK_MIN_INTEG_TIME);
 
-  pinMode(EXTERNAL_DAC_0, OUTPUT);
-  pinMode(TACH_LED, OUTPUT);
+    pinMode(EXTERNAL_DAC_0, OUTPUT);
+    pinMode(TACH_LED, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(TACH_INPUT_PIN), TachInterrupt, RISING);
+    attachInterrupt(digitalPinToInterrupt(TACH_INPUT_PIN), TachInterrupt, RISING);
 }
 
-char KnockDetectorClass::SPIWrite(const char tx_data)
+char KnockDetector::SPIWrite(const char tx_data)
 {
-  SPI.beginTransaction(SPISettingsKnock);
-  digitalWriteFast(SPI_KNOCK_CS_PIN, LOW);
-  byte rx_data = 0x00; 
-  rx_data = SPI.transfer(tx_data);
-  digitalWriteFast(SPI_KNOCK_CS_PIN, HIGH);
-  SPI.endTransaction();
+    SPI.beginTransaction(SPISettingsKnock);
+    digitalWriteFast(SPI_KNOCK_CS_PIN, LOW);
+    byte rx_data = 0x00;
+    rx_data = SPI.transfer(tx_data);
+    digitalWriteFast(SPI_KNOCK_CS_PIN, HIGH);
+    SPI.endTransaction();
 
-  LOG_VERBOSE("Knock SPI TX/RX", hexDump(tx_data), hexDump(rx_data));
+    LOG_VERBOSE("Knock SPI TX/RX", hexDump(tx_data), hexDump(rx_data));
 
-  return rx_data;
+    return rx_data;
 }
 
-void KnockDetectorClass::loop()
+void KnockDetector::loop()
 {
-  engineSpeed = constrain(
-    (int)(60000 / (tachPeriod * NUMBER_OF_CYLINDERS / 2000)),
-    MIN_RPM,
-    MAX_RPM
-  );
+    engineSpeed = constrain(
+        (int)(60000 / (tachPeriod * NUMBER_OF_CYLINDERS / 2000)),
+        MIN_RPM,
+        MAX_RPM);
 
-  if (debugTimer.check()) {
-    LOG_VERBOSE("RPM", engineSpeed);
-    LOG_VERBOSE("Knock time constant", hexDump(timeConstant));
-    LOG_VERBOSE("Knock ADC", knockValue);
-    LOG_VERBOSE("Knock %", knockValue / 1023 * 100);
-    LOG_VERBOSE("Tach Period", tachPeriod);
-  }
+    if (debugTimer.check())
+    {
+        LOG_VERBOSE("RPM", engineSpeed);
+        LOG_VERBOSE("Knock time constant", hexDump(timeConstant));
+        LOG_VERBOSE("Knock ADC", knockValue);
+        LOG_VERBOSE("Knock %", knockValue / 1023 * 100);
+        LOG_VERBOSE("Tach Period", tachPeriod);
+    }
 
-  analogWriteDAC0(map(knockValue, 0, 1023, 0, 4095)); // max val 4059 (12bit)
+    analogWriteDAC0(map(knockValue, 0, 1023, 0, 4095)); // max val 4059 (12bit)
 
-  // LOG_VERBOSE(knockValue);
-  if (engineSpeed == previousEngineSpeed) {
-    return; // early abort no need to update integration time, it hasn't changed
-  }
-  previousEngineSpeed = engineSpeed;
+    // LOG_VERBOSE(knockValue);
+    if (engineSpeed == previousEngineSpeed)
+    {
+        return; // early abort no need to update integration time, it hasn't changed
+    }
+    previousEngineSpeed = engineSpeed;
 
-  // map time constant in range based on RPM
-  timeConstant = map(engineSpeed, MIN_RPM, MAX_RPM, KNOCK_MAX_INTEG_TIME, KNOCK_MIN_INTEG_TIME);
+    // map time constant in range based on RPM
+    timeConstant = map(engineSpeed, MIN_RPM, MAX_RPM, KNOCK_MAX_INTEG_TIME, KNOCK_MIN_INTEG_TIME);
 
-  if (SPIWrite(timeConstant) != timeConstant) {
-    LOG_ERROR("INVALID RESPONSE FROM TPIC");
-    error = true;
-    LEDStatus::setError(KNOCK_SPI_ERROR, true);
-  } else {
-    error = false;
-    LEDStatus::setError(KNOCK_SPI_ERROR, false);
-  };
-
+    if (SPIWrite(timeConstant) != timeConstant)
+    {
+        LOG_ERROR("INVALID RESPONSE FROM TPIC");
+        error = true;
+        LEDStatus::setError(KNOCK_SPI_ERROR, true);
+    }
+    else
+    {
+        error = false;
+        LEDStatus::setError(KNOCK_SPI_ERROR, false);
+    };
 }
 
+void KnockDetector::getCANMessage(CAN_message_t &msg)
+{
+}

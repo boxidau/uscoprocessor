@@ -12,74 +12,77 @@
 #include "utils.h"
 #include "analogsensors.h"
 
-
 Metro statsTimer = Metro(10000);
 Metro pollTimer = Metro(50);
 
 CAN_message_t egtMessage, knockMessage, analogMessage, rxMessage;
 unsigned long previousLoop, loopStart;
 
-
 void setup()
 {
-  pinMode(EXTERNAL_PWM1, OUTPUT);
-  pinMode(EXTERNAL_PWM2, OUTPUT);
-  digitalWrite(EXTERNAL_PWM1, LOW);
-  digitalWrite(EXTERNAL_PWM2, LOW);
+    pinMode(EXTERNAL_PWM1, OUTPUT);
+    pinMode(EXTERNAL_PWM2, OUTPUT);
+    digitalWrite(EXTERNAL_PWM1, LOW);
+    digitalWrite(EXTERNAL_PWM2, LOW);
 
-  pinMode(EXTERNAL_DIGITAL_PIN, INPUT);
-  pinMode(EXTERNAL_DAC_1, OUTPUT);
-  
-  AnalogSensors::setup();
-  LEDStatus::setup();
+    pinMode(EXTERNAL_DIGITAL_PIN, INPUT);
+    pinMode(EXTERNAL_DAC_1, OUTPUT);
 
-  Serial.begin(9600);
-  LOG_VERBOSE("System Boot");
+    AnalogSensors::setup();
+    LEDStatus::setup();
 
-  SPI.begin();
-  ClockTime.setup();
+    Serial.begin(9600);
+    LOG_VERBOSE("System Boot");
 
-  CANLogger.setup();
+    SPI.begin();
+    ClockTime::setup();
+    CANLogger::setup();
 
-  Knock.setup();
-  EGT.setup();
+    KnockDetector::setup();
+    EGT::setup();
 
-  Can0.begin(500000); 
-  
-  LOG_VERBOSE("Ready");
+    Can0.begin(500000);
+
+    LOG_VERBOSE("Ready");
+}
+
+void writeAndLog(CAN_message_t &message)
+{
+    Can0.write(message);
+    CANLogger::logCANMessage(message, CAN_TX);
 }
 
 void loop()
 {
-  loopStart = micros();
-  unsigned long loopTime = loopStart - previousLoop;
-  previousLoop = loopStart;
+    loopStart = micros();
+    unsigned long loopTime = loopStart - previousLoop;
+    previousLoop = loopStart;
 
-  Knock.loop();
+    // tick functions for all modules
+    KnockDetector::loop();
+    LEDStatus::loop();
+    // end tick functions
 
-  if (pollTimer.check())
-  {
-    // EGT poll and log
-    EGT.getCANMessage(egtMessage);
-    Can0.write(egtMessage);
-    CANLogger.logCANMessage(egtMessage, CAN_TX);
-    LEDStatus::setError(EGT_ERROR, EGT.error > 0);
+    // poll all data and write to TX_CAN log
+    if (pollTimer.check())
+    {
+        // EGT poll and log
+        EGT::getCANMessage(egtMessage);
+        writeAndLog(egtMessage);
+        LEDStatus::setError(EGT_ERROR, EGT::error > 0);
 
-    
-    AnalogSensors::getCANMessage(analogMessage);
-    Can0.write(analogMessage);
-    CANLogger.logCANMessage(analogMessage, CAN_TX);
-  }
+        // analog sensor poll and log
+        AnalogSensors::getCANMessage(analogMessage);
+        writeAndLog(analogMessage);
+    }
 
-  while (Can0.read(rxMessage))
-  {
-    CANLogger.logCANMessage(rxMessage, CAN_RX);
-  }
+    while (Can0.read(rxMessage))
+    {
+        CANLogger::logCANMessage(rxMessage, CAN_RX);
+    }
 
-  
-  LEDStatus::loop();
-  if (statsTimer.check()) {
-    CANLogger.logComment("loop_time=" + (String)loopTime + "uS, error_code=" + hexDump(LEDStatus::getError()));
-  }
-
+    if (statsTimer.check())
+    {
+        CANLogger::logComment("loop_time=" + (String)loopTime + "uS, error_code=" + hexDump(LEDStatus::getError()));
+    }
 }

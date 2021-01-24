@@ -5,9 +5,8 @@
 
 #include <FlexCAN.h>
 
-
-
-class EGTClass {
+class EGT
+{
 public:
     static uint16_t celsius;
     static byte error;
@@ -15,5 +14,3 @@ public:
     static void getCANMessage(CAN_message_t &msg);
     static void readData();
 };
-
-extern EGTClass EGT;

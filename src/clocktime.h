@@ -1,10 +1,8 @@
 #include <TimeLib.h>
 
-class ClockTimeClass {
+class ClockTime
+{
 public:
-  static void setup();
-  static double getMillisTime();
+    static void setup();
+    static double getMillisTime();
 };
-
-
-extern ClockTimeClass ClockTime;
