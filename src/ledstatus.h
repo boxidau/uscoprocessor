@@ -1,7 +1,8 @@
-#define NO_ERROR 0b00000011
-#define EGT_ERROR 0b00000100
-#define CAN_ERROR 0b00001000
+#define NO_ERROR        0b00000011
+#define EGT_ERROR       0b00000100
+#define CAN_ERROR       0b00001000
 #define KNOCK_SPI_ERROR 0b00010000
+#define LOGGER_ERROR    0b00100000
 
 #include "Arduino.h"
 

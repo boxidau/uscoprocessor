@@ -72,9 +72,4 @@ void EGT::getCANMessage(CAN_message_t &msg)
     msg.buf[0] = celsius >> 8;
     msg.buf[1] = celsius & 0xFF;
     msg.buf[2] = error;
-    msg.buf[3] = 0;
-    msg.buf[4] = 0;
-    msg.buf[5] = 0;
-    msg.buf[6] = 0;
-    msg.buf[7] = 0;
 }

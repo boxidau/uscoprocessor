@@ -7,10 +7,11 @@
         "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy3",
         "C:/Users/simon/OneDrive/Documents/Arduino/libraries/DebugLog/**",
         "C:/Users/simon/OneDrive/Documents/Arduino/libraries/DebugLog/**",
-        "lib/SPI/**",
-        "lib/SD/**",
         "lib/FlexCAN/**",
+        "lib/MegaCAN/**",
         "lib/Metro/**",
+        "lib/SD/**",
+        "lib/SPI/**",
         "lib/Time/**"
       ],
       "forcedInclude": [],

@@ -3,6 +3,8 @@
 #include <SPI.h>
 #include <DebugLog.h>
 #include <FlexCAN.h>
+#include <MegaCAN.h>
+
 #include "knockdetector.h"
 #include "canlogger.h"
 #include "constants.h"
@@ -11,11 +13,17 @@
 #include "ledstatus.h"
 #include "utils.h"
 #include "analogsensors.h"
+#include "gaugeoutput.h"
 
 Metro statsTimer = Metro(10000);
 Metro pollTimer = Metro(50);
 
-CAN_message_t egtMessage, knockMessage, analogMessage, rxMessage;
+static CAN_message_t egtMessage, knockMessage, analogMessage, rxMessage;
+
+static MegaCAN megaCAN;
+static MegaCAN_broadcast_message_t megasquirtData;
+const uint32_t baseID = MEGASQUIRT_BROADCAST_CANID;
+
 unsigned long previousLoop, loopStart;
 
 void setup()
@@ -26,23 +34,21 @@ void setup()
     digitalWrite(EXTERNAL_PWM2, LOW);
 
     pinMode(EXTERNAL_DIGITAL_PIN, INPUT);
-    pinMode(EXTERNAL_DAC_1, OUTPUT);
-
-    AnalogSensors::setup();
-    LEDStatus::setup();
 
     Serial.begin(9600);
+    SPI.begin();
+    Can0.begin(500000);
+    delay(500);
     LOG_VERBOSE("System Boot");
 
-    SPI.begin();
     ClockTime::setup();
     CANLogger::setup();
 
+    AnalogSensors::setup();
+    LEDStatus::setup();
     KnockDetector::setup();
     EGT::setup();
-
-    Can0.begin(500000);
-
+    GaugeOutput::setup(0, 200); // boost gauge 0-200kPa
     LOG_VERBOSE("Ready");
 }
 
@@ -50,6 +56,16 @@ void writeAndLog(CAN_message_t &message)
 {
     Can0.write(message);
     CANLogger::logCANMessage(message, CAN_TX);
+}
+
+uint16_t maptest = 0;
+
+void processRXCANMessage()
+{
+    CANLogger::logCANMessage(rxMessage, CAN_RX);
+    if (rxMessage.id >= MEGASQUIRT_BROADCAST_CANID && rxMessage.id <= MEGASQUIRT_BROADCAST_CANID + MEGASQUIRT_BROADCAST_PAGES) {
+        megaCAN.getBCastData(rxMessage.id, rxMessage.buf, megasquirtData);
+    }
 }
 
 void loop()
@@ -68,17 +84,29 @@ void loop()
     {
         // EGT poll and log
         EGT::getCANMessage(egtMessage);
-        writeAndLog(egtMessage);
         LEDStatus::setError(EGT_ERROR, EGT::error > 0);
+        writeAndLog(egtMessage);
 
         // analog sensor poll and log
         AnalogSensors::getCANMessage(analogMessage);
         writeAndLog(analogMessage);
+
+        // knock detection log
+        KnockDetector::getCANMessage(knockMessage);
+        LEDStatus::setError(KNOCK_SPI_ERROR, KnockDetector::error);
+        writeAndLog(knockMessage);
+
+        // Logger error status
+        LEDStatus::setError(LOGGER_ERROR, CANLogger::error);
+
+        GaugeOutput::update(megasquirtData.map);
     }
 
-    while (Can0.read(rxMessage))
+
+    // read canbus data if message is available
+    if(Can0.read(rxMessage))
     {
-        CANLogger::logCANMessage(rxMessage, CAN_RX);
+        processRXCANMessage();
     }
 
     if (statsTimer.check())

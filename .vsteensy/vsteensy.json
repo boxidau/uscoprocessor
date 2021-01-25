@@ -17,10 +17,11 @@
         "DebugLog"
       ],
       "projectLibraries": [
-        "SPI",
-        "SD",
         "FlexCAN",
+        "MegaCAN",
         "Metro",
+        "SD",
+        "SPI",
         "Time"
       ],
       "board": {

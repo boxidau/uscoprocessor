@@ -11,7 +11,7 @@ public:
     static void setup();
     static void logComment(const String line);
     static void logCANMessage(const CAN_message_t &message, bool rx);
-
+    static bool error;
 private:
     static void write();
 };

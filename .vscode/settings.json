@@ -4,7 +4,12 @@
         "initializer_list": "cpp",
         "*.tcc": "cpp",
         "istream": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "exception": "cpp",
+        "iosfwd": "cpp",
+        "new": "cpp",
+        "ostream": "cpp",
+        "streambuf": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

@@ -14,5 +14,3 @@ public:
 private:
     static char SPIWrite(const char tx_data);
 };
-
-extern KnockDetector Knock;

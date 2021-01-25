@@ -10,24 +10,21 @@
 
 #include <Metro.h>
 
-volatile uint16_t knockValue = 0;
-volatile unsigned long tachPeriod = 0x8FFF;
-unsigned long previousTach = 0;
-uint8_t timeConstant = KNOCK_MAX_INTEG_TIME;
+static volatile uint16_t knockValue = 0;
+static volatile unsigned long tachPeriod = 0x8FFF;
+static unsigned long previousTach = 0;
+static uint8_t timeConstant = KNOCK_MAX_INTEG_TIME;
+static uint16_t engineSpeed = 0;
+static Metro debugTimer = Metro(1000);
+static SPISettings SPISettingsKnock(3000000, MSBFIRST, SPI_MODE1);
 
 bool KnockDetector::error = false;
-
-uint16_t previousEngineSpeed = 0;
-int engineSpeed = 0;
-
-Metro debugTimer = Metro(1000);
-
-SPISettings SPISettingsKnock(3000000, MSBFIRST, SPI_MODE1);
 
 void TachInterrupt()
 {
     // measurement window ends
     digitalWriteFast(KNOCK_HOLD_PIN, LOW);
+
     // Calculate period between tach interrupts
     tachPeriod = micros() - previousTach;
     previousTach = micros();
@@ -87,6 +84,7 @@ char KnockDetector::SPIWrite(const char tx_data)
 
 void KnockDetector::loop()
 {
+    static uint16_t previousEngineSpeed;
     engineSpeed = constrain(
         (int)(60000 / (tachPeriod * NUMBER_OF_CYLINDERS / 2000)),
         MIN_RPM,
@@ -128,4 +126,16 @@ void KnockDetector::loop()
 
 void KnockDetector::getCANMessage(CAN_message_t &msg)
 {
+    msg.id = KNOCK_CANID;
+    msg.len = 6;
+    msg.flags = {};
+
+    msg.buf[0] = knockValue >> 8;
+    msg.buf[1] = knockValue & 0xFF;
+
+    msg.buf[2] = engineSpeed >> 8;
+    msg.buf[3] = engineSpeed & 0xFF;
+
+    msg.buf[4] = timeConstant;
+    msg.buf[5] = error;
 }

@@ -42,9 +42,11 @@
 #define         CAN_TX_PIN                      3
 #define         CAN_RX_PIN                      4
 #define         MEGASQUIRT_BROADCAST_CANID      1512
+#define         MEGASQUIRT_BROADCAST_PAGES      63
 #define         BASE_CANID                      2024
 #define         EGT_CANID                       2025
 #define         ANALOG_CANID                    2026
+#define         KNOCK_CANID                     2027
 
 
 // EGT

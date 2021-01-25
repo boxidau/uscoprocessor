@@ -7,7 +7,7 @@
 # Optimize           Faster
 # Keyboard Layout    US English
 #
-# 1/10/2021 3:17 PM
+# 1/24/2021 5:37 PM
 #******************************************************************************
 SHELL            := cmd.exe
 export SHELL
@@ -21,7 +21,7 @@ LIBS_SHARED_BASE := C:\Users\simon\OneDrive\Documents\Arduino\libraries
 LIBS_SHARED      := DebugLog DebugLog 
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := SPI SD FlexCAN Metro Time 
+LIBS_LOCAL       := FlexCAN MegaCAN Metro SD SPI Time 
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy3
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
@@ -45,7 +45,6 @@ LIBS        := -larm_cortexM4lf_math -lm -lstdc++
 
 DEFINES     := -D__MK64FX512__ -DTEENSYDUINO=153 -DARDUINO_TEENSY35 -DARDUINO=10807
 DEFINES     += -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
-#DEFINES     += -DNDEBUG
 
 CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP)
 C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C)
