@@ -102,9 +102,9 @@ void KnockDetector::loop()
     analogWriteDAC0(map(knockValue, 0, 1023, 0, 4095)); // max val 4059 (12bit)
 
     // LOG_VERBOSE(knockValue);
-    if (engineSpeed == previousEngineSpeed)
+    if (abs(engineSpeed - previousEngineSpeed) < 50)
     {
-        return; // early abort no need to update integration time, it hasn't changed
+        return; // early abort no need to update integration time, it hasn't changed much
     }
     previousEngineSpeed = engineSpeed;
 

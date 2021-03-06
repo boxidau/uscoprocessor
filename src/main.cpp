@@ -17,6 +17,7 @@
 
 Metro statsTimer = Metro(10000);
 Metro pollTimer = Metro(50);
+Metro msTick = Metro(1);
 
 static CAN_message_t egtMessage, knockMessage, analogMessage, rxMessage;
 
@@ -30,12 +31,10 @@ void setup()
 {
     pinMode(EXTERNAL_PWM1, OUTPUT);
     pinMode(EXTERNAL_PWM2, OUTPUT);
-    digitalWrite(EXTERNAL_PWM1, LOW);
-    digitalWrite(EXTERNAL_PWM2, LOW);
 
     pinMode(EXTERNAL_DIGITAL_PIN, INPUT);
 
-    Serial.begin(9600);
+    Serial.begin(115200);
     SPI.begin();
     Can0.begin(500000);
     delay(500);
@@ -112,5 +111,6 @@ void loop()
     if (statsTimer.check())
     {
         CANLogger::logComment("loop_time=" + (String)loopTime + "uS, error_code=" + hexDump(LEDStatus::getError()));
+        LOG_VERBOSE("loop_time=" + (String)loopTime + "uS, error_code=" + hexDump(LEDStatus::getError()));
     }
 }

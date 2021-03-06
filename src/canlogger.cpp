@@ -2,7 +2,7 @@
 Writes CRTD log files for CANBUS logging
 https://docs.openvehicles.com/en/latest/crtd
 */
-
+#define NDEBUG
 #include "canlogger.h"
 
 #include "clocktime.h"
@@ -15,7 +15,7 @@ static char lineBuffer[255];
 static int linesWritten;
 static File logFile;
 static bool enableLog;
-static Metro retrySDTimer = Metro(1000);
+static Metro retrySDTimer = Metro(5000);
 
 bool CANLogger::error = false;
 
@@ -88,26 +88,32 @@ void CANLogger::logComment(const String line)
     char strBuf[241];
     line.toCharArray(strBuf, 240);
 
-    sprintf(lineBuffer, "%0.3f CXX %s", ClockTime::getMillisTime(), strBuf);
+    snprintf(lineBuffer, 254, "%0.3f CXX %s", ClockTime::getMillisTime(), strBuf);
     write();
 }
 
-void CANLogger::logCANMessage(const CAN_message_t &message, bool rx)
-{
-    sprintf(lineBuffer, "%0.3f %d%s%s %lu %02X %02X %02X %02X %02X %02X %02X %02X",
+void CANLogger::stringify(char output[255], const CAN_message_t &message, bool rx) {
+    sprintf(output, "%0.3f %d%s%s %lu ",
             ClockTime::getMillisTime(),
             1, // hardcode canbus 1 for now
             rx ? "R" : "T",
             message.flags.extended ? "29" : "11",
-            message.id,
-            message.buf[0],
-            message.buf[1],
-            message.buf[2],
-            message.buf[3],
-            message.buf[4],
-            message.buf[5],
-            message.buf[6],
-            message.buf[7]);
+            message.id
+    );
+
+    for (int i = 0; i < message.len; i++) {
+        char hexBuf[3];
+        sprintf(hexBuf, "%02X",  message.buf[i]);
+        strcat(output, hexBuf);
+        if (i != message.len-1) {
+            strcat(output, " ");
+        }
+    }
+}
+
+void CANLogger::logCANMessage(const CAN_message_t &message, bool rx)
+{
+    stringify(lineBuffer, message, rx);
     write();
 }
 
@@ -125,17 +131,19 @@ void CANLogger::write()
 
     if (random(0, 20) == 0) LOG_VERBOSE("LOG WRITE:", lineBuffer);
 
-    if (logFile.print(lineBuffer) != strlen(lineBuffer))
+    if (logFile.println(lineBuffer) != strlen(lineBuffer) + 2)
     {
         enableLog = false;
         error = true;
         return;
     }
-    
+
+    ++linesWritten;
     error = false;
-    if (++linesWritten % 50 == 0)
+    
+    if (retrySDTimer.check())
     {
-        LOG_VERBOSE("LOG FLUSH, written lines: ", linesWritten);
+        LOG_VERBOSE("LOG FLUSH, written lines: ", linesWritten );
         logFile.flush();
     }
 }
